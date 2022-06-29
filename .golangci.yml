@@ -1,0 +1,8 @@
+---
+linters:
+  enable:
+    - gofumpt
+    - misspell
+    - bodyclose
+    - forbidigo
+    - exportloopref

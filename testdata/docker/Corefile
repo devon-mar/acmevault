@@ -1,0 +1,14 @@
+.:53 {
+    temptxt {
+        txt _acme-challenge.rsa2048.example.com CN=client
+        txt _acme-challenge.rsa2048reuse.example.com CN=client
+        txt _acme-challenge.ec256.example.com CN=client
+        txt _acme-challenge.ec256-1.example.com CN=client
+    }
+    records example.com. {
+        @       300     IN      SOA     ns.example.com.   admin.example.com. 20220623      28800  7200     604800  86400
+        @       300     IN      NS      ns.example.com.
+        ns      300     IN      A       127.0.0.1
+    }
+    log
+}

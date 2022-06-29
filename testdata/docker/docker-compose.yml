@@ -1,0 +1,39 @@
+---
+version: "3.9"
+
+services:
+  vault:
+    image: vault:latest
+    environment:
+      SKIP_SETCAP: "true"
+      VAULT_DEV_ROOT_TOKEN_ID: 4840549d-6897-4ab1-a414-2a971ff8bdde
+    command: server -dev -dev-listen-address="0.0.0.0:8201" -config=/tls.hcl
+    ports:
+      - 8200:8200
+    volumes:
+      - ./certs:/certs:ro
+      - ./tls.hcl:/tls.hcl:ro
+  pebble:
+    image: letsencrypt/pebble:latest
+    command: pebble -config /test/config/pebble-config.json -strict -dnsserver temptxt:53
+    ports:
+      - 14000:14000 # HTTPS ACME API
+      - 15000:15000 # HTTPS Management API
+    environment:
+      PEBBLE_CHAIN_LENGTH: "2"
+  nginx:
+    image: nginx:stable-alpine
+    depends_on:
+      - temptxt
+    volumes:
+      - ./certs:/certs:ro
+      - ./temptxt.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 8443:443
+      - 8080:80
+  temptxt:
+    image: devonm/coredns:latest
+    volumes:
+      - ./Corefile:/Corefile:ro
+    ports:
+      - 1053:53/udp
