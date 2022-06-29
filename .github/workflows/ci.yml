@@ -22,7 +22,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
 
-  tests:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -40,6 +40,11 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Pull container images
+        run: |
+          docker-compose pull
+        working-directory: testdata/docker
 
       - name: Run tests
         run: make integration
