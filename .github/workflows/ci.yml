@@ -41,6 +41,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Build
+        run: |
+          make build
+          make build-dns01all
+
       - name: Pull container images
         run: |
           docker-compose pull
