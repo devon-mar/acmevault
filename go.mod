@@ -3,7 +3,7 @@ module github.com/devon-mar/acmevault
 go 1.18
 
 require (
-	github.com/go-acme/lego/v4 v4.7.0
+	github.com/go-acme/lego/v4 v4.8.0
 	github.com/hashicorp/vault/api v1.7.2
 	github.com/sirupsen/logrus v1.8.1
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20210415151418-c5206de65a78
@@ -84,7 +84,7 @@ require (
 	github.com/liquidweb/liquidweb-cli v0.6.9 // indirect
 	github.com/liquidweb/liquidweb-go v1.6.3 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/miekg/dns v1.1.47 // indirect
 	github.com/mimuret/golang-iij-dpf v0.7.1 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
@@ -131,7 +131,7 @@ require (
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
