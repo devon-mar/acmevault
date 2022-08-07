@@ -98,6 +98,7 @@ func (p *TempTXTProvider) set(fqdn string, value string) error {
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
 	if r.StatusCode < 200 || r.StatusCode > 299 {
 		return fmt.Errorf("got status %d", r.StatusCode)
 	}
