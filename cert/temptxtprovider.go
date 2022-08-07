@@ -17,21 +17,23 @@ import (
 )
 
 const (
-	EnvTTDebug         = "TEMPTXT_DEBUG"
-	EnvTTURL           = "TEMPTXT_URL"
-	EnvTTCert          = "TEMPTXT_CERT"
-	EnvTTKey           = "TEMPTXT_KEY"
-	EnvTTCA            = "TEMPTXT_CA"
-	tempTxtKeyfQDN     = "fqdn"
-	tempTxtKeyContent  = "content"
-	tempTxtDebugHeader = "X-Forwarded-User"
-	tempTxtDebugUser   = "user"
+	EnvTTDebug              = "TEMPTXT_DEBUG"
+	EnvTTURL                = "TEMPTXT_URL"
+	EnvTTCert               = "TEMPTXT_CERT"
+	EnvTTKey                = "TEMPTXT_KEY"
+	EnvTTCA                 = "TEMPTXT_CA"
+	EnvTTStripAcmeChallenge = "TEMPTXT_STRIP_ACME_CHALLENGE"
+	tempTxtKeyfQDN          = "fqdn"
+	tempTxtKeyContent       = "content"
+	tempTxtDebugHeader      = "X-Forwarded-User"
+	tempTxtDebugUser        = "user"
 )
 
 type TempTXTProvider struct {
-	url    string
-	client http.Client
-	debug  bool
+	url                string
+	stripAcmeChallenge bool
+	client             http.Client
+	debug              bool
 }
 
 func NewTempTXTProvider() (*TempTXTProvider, error) {
@@ -42,6 +44,7 @@ func NewTempTXTProvider() (*TempTXTProvider, error) {
 	}
 	p.client = http.Client{Timeout: time.Second * 2, Transport: transport}
 	p.debug, _ = strconv.ParseBool(os.Getenv(EnvTTDebug))
+	p.stripAcmeChallenge, _ = strconv.ParseBool(os.Getenv(EnvTTStripAcmeChallenge))
 
 	p.url, err = readEnv(EnvTTURL)
 	if err != nil {
@@ -102,9 +105,18 @@ func (p *TempTXTProvider) set(fqdn string, value string) error {
 	return nil
 }
 
+func (p *TempTXTProvider) getRecord(domain string, keyAuth string) (string, string) {
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
+
+	if p.stripAcmeChallenge {
+		fqdn = strings.TrimPrefix(fqdn, "_acme-challenge.")
+	}
+	return fqdn, value
+}
+
 // CleanUp implements challenge.Provider
 func (p *TempTXTProvider) CleanUp(domain string, token string, keyAuth string) error {
-	fqdn, _ := dns01.GetRecord(domain, keyAuth)
+	fqdn, _ := p.getRecord(domain, keyAuth)
 	err := p.set(fqdn, "")
 	if err != nil {
 		return fmt.Errorf("temptxt: %w", err)
@@ -114,7 +126,7 @@ func (p *TempTXTProvider) CleanUp(domain string, token string, keyAuth string) e
 
 // Present implements challenge.Provider
 func (p *TempTXTProvider) Present(domain string, token string, keyAuth string) error {
-	fqdn, value := dns01.GetRecord(domain, keyAuth)
+	fqdn, value := p.getRecord(domain, keyAuth)
 	err := p.set(fqdn, value)
 	if err != nil {
 		return fmt.Errorf("temptxt: %w", err)
