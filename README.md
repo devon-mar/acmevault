@@ -7,6 +7,7 @@ Obtain certificates from an ACME CA and store them in Vault.
 | Variable | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `AV_CERTS` | string | true | | The certificates to obtain. See [AV_CERTS](#AV_CERTS). |
+| `ACME_TOS_AGREED` | bool | true | | Set to true to agree to the ACME CA tos. |
 
 #### `AV_CERTS`
 Each certificate is separated by a new line.
