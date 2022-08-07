@@ -56,3 +56,4 @@ test.example.com,muststaple=true,keytype=EC256
 | `TEMPTXT_CERT` | string | false | | The client certificate to use. |
 | `TEMPTXT_KEY` | string | false | | The client private key to use. |
 | `TEMPTXT_CA` | string | false | | Optional CA to verify the server's SSL certificate. |
+| `TEMPTXT_STRIP_ACME_CHALLENGE` | bool | false | | Strip `_acme-challenge.` from the domain when presenting it to the temptxt server. |
