@@ -80,7 +80,7 @@ func bytesToCerts(b []byte, limit int) ([]*x509.Certificate, error) {
 		}
 		c, err := x509.ParseCertificate(decoded.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing certificate")
+			return nil, fmt.Errorf("error parsing certificate: %w", err)
 		}
 		ret = append(ret, c)
 	}
