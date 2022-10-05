@@ -28,8 +28,6 @@ const (
 	VaultKVKeyPFX  = "pfx"
 
 	kvKeyAccount = "account"
-	// https://github.com/hashicorp/vault/blob/22660040010e4518954962108766f046490dcd9f/api/kv_v2.go#L118
-	vaultErrNoSecret = "no secret found at "
 )
 
 type VaultStore struct {
@@ -91,7 +89,7 @@ func NewVaultStore() (*VaultStore, error) {
 // Retrieve implements Store
 func (s *VaultStore) Retrieve(cn string) (*cert.Bundle, error) {
 	data, err := s.kv().Get(context.Background(), s.certPath(cn))
-	if err != nil && strings.HasPrefix(err.Error(), vaultErrNoSecret) {
+	if errors.Is(err, vault.ErrSecretNotFound) {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
@@ -120,7 +118,7 @@ func (s *VaultStore) certPath(cn string) string {
 // RetrieveAccount implements Store
 func (s *VaultStore) RetrieveAccount() (string, error) {
 	data, err := s.kv().Get(context.Background(), s.accountPath)
-	if err != nil && strings.HasPrefix(err.Error(), vaultErrNoSecret) {
+	if errors.Is(err, vault.ErrSecretNotFound) {
 		return "", nil
 	} else if err != nil {
 		return "", err
