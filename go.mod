@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-acme/lego/v4 v4.9.0
-	github.com/hashicorp/vault/api v1.8.0
+	github.com/hashicorp/vault/api v1.8.1
 	github.com/sirupsen/logrus v1.9.0
 	software.sslmate.com/src/go-pkcs12 v0.2.0
 )
