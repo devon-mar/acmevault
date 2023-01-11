@@ -2,8 +2,6 @@ package cert
 
 import (
 	"crypto"
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -45,24 +43,14 @@ func bytesToKey(b []byte) (crypto.PrivateKey, error) {
 }
 
 func keyToString(k crypto.PrivateKey) (string, error) {
-	var keyType string
 	var keyBytes []byte
 	var err error
 
-	switch k := k.(type) {
-	case *ecdsa.PrivateKey:
-		keyBytes, err = x509.MarshalECPrivateKey(k)
-		keyType = pemBlockECPrivateKey
-	case *rsa.PrivateKey:
-		keyBytes = x509.MarshalPKCS1PrivateKey(k)
-		keyType = pemBlockPrivateKey1
-	default:
-		return "", fmt.Errorf("unsupported key type %T", k)
-	}
+	keyBytes, err = x509.MarshalPKCS8PrivateKey(k)
 	if err != nil {
 		return "", err
 	}
-	return string(pem.EncodeToMemory(&pem.Block{Type: keyType, Bytes: keyBytes})), nil
+	return string(pem.EncodeToMemory(&pem.Block{Type: pemBlockPrivateKey8, Bytes: keyBytes})), nil
 }
 
 func bytesToCerts(b []byte, limit int) ([]*x509.Certificate, error) {

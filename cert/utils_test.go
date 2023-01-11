@@ -29,7 +29,7 @@ func TestCertsRoundTrip(t *testing.T) {
 }
 
 func TestKeyRoundTrip(t *testing.T) {
-	keys := []string{"pkcs1_rsa.key", "ecdsa.key"}
+	keys := []string{"ec256.key", "ed25519.key", "rsa2048.key"}
 	for _, file := range keys {
 		t.Run(file, func(t *testing.T) {
 			in, err := os.ReadFile(path.Join("testdata", file))
@@ -48,6 +48,23 @@ func TestKeyRoundTrip(t *testing.T) {
 
 			if string(in) != keyString {
 				t.Errorf("original %s, new %s", in, keyString)
+			}
+		})
+	}
+}
+
+// Test that we can successfully read EC private keys and PKCS1 keys.
+func TestBytesToKey(t *testing.T) {
+	keys := []string{"ec_private_key.key", "pkcs1_rsa.key"}
+	for _, file := range keys {
+		t.Run(file, func(t *testing.T) {
+			in, err := os.ReadFile(path.Join("testdata", file))
+			if err != nil {
+				t.Fatalf("error reading file: %v", err)
+			}
+			_, err = bytesToKey(in)
+			if err != nil {
+				t.Fatalf("got error: %v", err)
 			}
 		})
 	}
