@@ -80,14 +80,14 @@ func TestShouldRenew(t *testing.T) {
 }
 
 type testStore struct {
-	account            string
+	account            map[string]string
 	retrieveAccountErr error
-	storedAccount      string
+	storedAccount      map[string]string
 	storeAccountErr    error
 
 	stored []string
 
-	wantAccount string
+	wantAccount map[string]string
 	wantStored  []string
 
 	storePath string
@@ -118,7 +118,7 @@ func (s *testStore) Retrieve(cn string) (*cert.Bundle, error) {
 }
 
 // RetrieveAccount implements store.Store
-func (s *testStore) RetrieveAccount() (string, error) {
+func (s *testStore) RetrieveAccount() (map[string]string, error) {
 	return s.account, s.retrieveAccountErr
 }
 
@@ -133,14 +133,14 @@ func (s *testStore) Store(cb *cert.Bundle) error {
 }
 
 // StoreAccount implements store.Store
-func (s *testStore) StoreAccount(acc string) error {
+func (s *testStore) StoreAccount(acc map[string]string) error {
 	s.storedAccount = acc
 	return s.storeAccountErr
 }
 
 func (s *testStore) assert(t *testing.T) {
-	if s.storedAccount != s.wantAccount {
-		t.Errorf("expected %q to be stored but got %q", s.wantAccount, s.storedAccount)
+	if !reflect.DeepEqual(s.storedAccount, s.wantAccount) {
+		t.Errorf("expected %#v to be stored but got %#v", s.wantAccount, s.storedAccount)
 	}
 	if !reflect.DeepEqual(s.stored, s.wantStored) {
 		t.Errorf("stored: got %#v, want %#v", s.stored, s.wantStored)
@@ -148,16 +148,10 @@ func (s *testStore) assert(t *testing.T) {
 }
 
 type testIssuer struct {
-	account     string
 	issuedCerts int
 	wantIssued  int
 
 	mustHaveKey bool
-}
-
-// Account implements cert.Issuer
-func (ti *testIssuer) Account() string {
-	return ti.account
 }
 
 // Issue implements cert.Issuer
@@ -233,15 +227,16 @@ func TestRun(t *testing.T) {
 		t.Fatalf("error writing key: %v", err)
 	}
 
-	testAcc1 := "testacc1"
+	testAcc1 := map[string]string{"name": "testacc1", "type": "test account"}
 	tests := map[string]struct {
-		config      *config
-		store       *testStore
-		storeError  error
-		issuer      *testIssuer
-		issuerError error
-		reuseKey    bool
-		wantReturn  int
+		config         *config
+		accountToStore map[string]string
+		store          *testStore
+		storeError     error
+		issuer         *testIssuer
+		issuerError    error
+		reuseKey       bool
+		wantReturn     int
 	}{
 		"issue 1, no account in store, reuseKey=f": {
 			config: &config{certs: []certConfig{simpleCC("expired.example.com")}},
@@ -249,10 +244,8 @@ func TestRun(t *testing.T) {
 				wantAccount: testAcc1,
 				wantStored:  []string{"expired.example.com"},
 			},
-			issuer: &testIssuer{
-				account:    testAcc1,
-				wantIssued: 1,
-			},
+			accountToStore: testAcc1,
+			issuer:         &testIssuer{wantIssued: 1},
 		},
 		"issue 1,reuseKey=t": {
 			config: &config{certs: []certConfig{
@@ -263,7 +256,6 @@ func TestRun(t *testing.T) {
 				wantStored: []string{"expired.example.com"},
 			},
 			issuer: &testIssuer{
-				account:     testAcc1,
 				mustHaveKey: true,
 				wantIssued:  1,
 			},
@@ -273,34 +265,32 @@ func TestRun(t *testing.T) {
 				{CertRequest: cert.CertRequest{Domains: []string{"donotrenew.example.com"}}, reuseKey: true},
 			}},
 			store:  &testStore{account: testAcc1, storePath: certDir},
-			issuer: &testIssuer{account: testAcc1},
+			issuer: &testIssuer{},
 		},
 		"store error": {
-			config: &config{certs: []certConfig{simpleCC("storeerror.example.com")}},
-			store:  &testStore{wantAccount: testAcc1},
-			issuer: &testIssuer{
-				account:    testAcc1,
-				wantIssued: 1,
-			},
-			wantReturn: 1,
+			config:         &config{certs: []certConfig{simpleCC("storeerror.example.com")}},
+			store:          &testStore{wantAccount: testAcc1},
+			issuer:         &testIssuer{wantIssued: 1},
+			wantReturn:     1,
+			accountToStore: testAcc1,
 		},
 		"1 issue error": {
 			config:     &config{certs: []certConfig{simpleCC("error.example.com")}},
 			store:      &testStore{account: testAcc1},
-			issuer:     &testIssuer{account: testAcc1},
+			issuer:     &testIssuer{},
 			wantReturn: 1,
 		},
 		"store retrieve error": {
 			// we'll just give it a bad PEM file to trigger an error
 			config:     &config{certs: []certConfig{simpleCC("invalid")}},
 			store:      &testStore{account: testAcc1},
-			issuer:     &testIssuer{account: testAcc1},
+			issuer:     &testIssuer{},
 			wantReturn: 1,
 		},
 		"2 issue errors": {
 			config:     &config{certs: []certConfig{simpleCC("error.example.com"), simpleCC("error2.example.com")}},
 			store:      &testStore{account: testAcc1},
-			issuer:     &testIssuer{account: testAcc1},
+			issuer:     &testIssuer{},
 			wantReturn: 2,
 		},
 		"2 issue errors, exitOnError": {
@@ -309,20 +299,21 @@ func TestRun(t *testing.T) {
 				exitOnError: true,
 			},
 			store:      &testStore{account: testAcc1},
-			issuer:     &testIssuer{account: testAcc1},
+			issuer:     &testIssuer{},
 			wantReturn: 1,
 		},
 		// StoreAccount shouldn't be called
 		"account already in store": {
 			config: &config{certs: []certConfig{}},
 			store:  &testStore{account: testAcc1},
-			issuer: &testIssuer{account: testAcc1},
+			issuer: &testIssuer{},
 		},
 		"store account err": {
-			config:     &config{certs: []certConfig{}},
-			store:      &testStore{storeAccountErr: errors.New("test"), wantAccount: testAcc1},
-			issuer:     &testIssuer{account: testAcc1},
-			wantReturn: 1,
+			config:         &config{certs: []certConfig{}},
+			store:          &testStore{storeAccountErr: errors.New("test"), wantAccount: testAcc1},
+			accountToStore: testAcc1,
+			issuer:         &testIssuer{},
+			wantReturn:     1,
 		},
 		"RetrieveAccount error": {
 			config:     &config{certs: []certConfig{}},
@@ -347,7 +338,9 @@ func TestRun(t *testing.T) {
 			have := run(
 				tc.config,
 				func() (store.Store, error) { return tc.store, tc.storeError },
-				func(string) (cert.Issuer, error) { return tc.issuer, tc.issuerError },
+				func(m map[string]string) (cert.Issuer, map[string]string, error) {
+					return tc.issuer, tc.accountToStore, tc.issuerError
+				},
 			)
 			if have != tc.wantReturn {
 				t.Errorf("expected return code %d, got %d", tc.wantReturn, have)

@@ -4,7 +4,6 @@ import "crypto"
 
 type Issuer interface {
 	Issue(CertRequest) (*Bundle, error)
-	Account() string
 }
 
 type CertRequest struct {

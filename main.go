@@ -25,11 +25,11 @@ func main() {
 	exitFunc(run(
 		cfg,
 		func() (store.Store, error) { return store.NewVaultStore() },
-		func(a string) (cert.Issuer, error) { return cert.NewACMEIssuer(a) },
+		func(a map[string]string) (cert.Issuer, map[string]string, error) { return cert.NewACMEIssuer(a) },
 	))
 }
 
-func run(cfg *config, newStore func() (store.Store, error), newIssuer func(string) (cert.Issuer, error)) int {
+func run(cfg *config, newStore func() (store.Store, error), newIssuer func(map[string]string) (cert.Issuer, map[string]string, error)) int {
 	log.Infof("Found %d cert(s)", len(cfg.certs))
 	av := &acmeVault{}
 
@@ -46,16 +46,17 @@ func run(cfg *config, newStore func() (store.Store, error), newIssuer func(strin
 		return 1
 	}
 
-	av.issuer, err = newIssuer(account)
+	var accountToStore map[string]string
+	av.issuer, accountToStore, err = newIssuer(account)
 	if err != nil {
 		log.WithError(err).Error("error initializing cert issuer")
 		return 1
 	}
 
-	if newAccount := av.issuer.Account(); newAccount != account {
+	if accountToStore != nil {
 		log.Info("Account has changed")
 		// Update the account if different
-		if err = av.store.StoreAccount(newAccount); err != nil {
+		if err = av.store.StoreAccount(accountToStore); err != nil {
 			log.WithError(err).Error("error storing issuer account in store")
 			return 1
 		}

@@ -26,8 +26,6 @@ const (
 	VaultKVKeyKey  = "key"
 	VaultKVKeyCA   = "ca"
 	VaultKVKeyPFX  = "pfx"
-
-	kvKeyAccount = "account"
 )
 
 type VaultStore struct {
@@ -116,19 +114,24 @@ func (s *VaultStore) certPath(cn string) string {
 }
 
 // RetrieveAccount implements Store
-func (s *VaultStore) RetrieveAccount() (string, error) {
+func (s *VaultStore) RetrieveAccount() (map[string]string, error) {
 	data, err := s.kv().Get(context.Background(), s.accountPath)
 	if errors.Is(err, vault.ErrSecretNotFound) {
-		return "", nil
+		return nil, nil
 	} else if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	account, ok := data.Data[kvKeyAccount].(string)
-	if !ok {
-		return "", fmt.Errorf("%q:%q is not a string", s.accountPath, kvKeyAccount)
+	var ok bool
+	ret := make(map[string]string, len(data.Data))
+	for k, v := range data.Data {
+		ret[k], ok = v.(string)
+		if !ok {
+			return nil, fmt.Errorf("account key %q is not a string", k)
+		}
 	}
-	return account, nil
+
+	return ret, nil
 }
 
 // Store implements Store
@@ -154,8 +157,12 @@ func (s *VaultStore) Store(cb *cert.Bundle) error {
 }
 
 // StoreAccount implements Store
-func (s *VaultStore) StoreAccount(acc string) error {
-	_, err := s.kv().Put(context.Background(), s.accountPath, map[string]interface{}{kvKeyAccount: acc})
+func (s *VaultStore) StoreAccount(acc map[string]string) error {
+	data := make(map[string]interface{}, len(acc))
+	for k, v := range acc {
+		data[k] = v
+	}
+	_, err := s.kv().Put(context.Background(), s.accountPath, data)
 	return err
 }
 

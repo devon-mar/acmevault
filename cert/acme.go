@@ -6,6 +6,9 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -30,6 +33,9 @@ const (
 	EnvACMETOSAgreed                  = "ACME_TOS_AGREED"
 
 	providerTempTxt = "temptxt"
+
+	accountMapUser       = "registration"
+	accountMapPrivateKey = "private_key"
 )
 
 type ACMEIssuer struct {
@@ -41,70 +47,84 @@ func init() {
 	legolog.Logger = log.StandardLogger()
 }
 
-func NewACMEIssuer(account string) (*ACMEIssuer, error) {
+func NewACMEIssuer(account map[string]string) (*ACMEIssuer, map[string]string, error) {
 	if b, _ := strconv.ParseBool(os.Getenv(EnvACMETOSAgreed)); !b {
-		return nil, errors.New("TOS not agreed")
+		return nil, nil, errors.New("TOS not agreed")
 	}
 
 	dir, err := readEnv(EnvACMEDir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	dns01, err := readEnv(EnvACMEDNSProvider)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	email, err := readEnv(EnvACMEEmail)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	var accountKey crypto.PrivateKey
-	if account != "" {
-		accountKey, err = bytesToKey([]byte(account))
+	var user *acmeUser
+
+	if account != nil {
+		user, err = userFromMap(account)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing account key: %w", err)
+			return nil, nil, err
 		}
 	} else {
+		// Otherwise create a new one
 		log.Infof("Generating new ACME account key")
-		accountKey, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+		user = &acmeUser{Email: email}
+		user.key, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 		if err != nil {
-			return nil, fmt.Errorf("error generating new account key: %w", err)
+			return nil, nil, fmt.Errorf("error generating new account key: %w", err)
 		}
 	}
-
-	user := &acmeUser{email: email, key: accountKey}
 
 	ai := &ACMEIssuer{}
 	acmeConfig := lego.NewConfig(user)
 	acmeConfig.CADirURL = dir
 	ai.client, err = lego.NewClient(acmeConfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	provider, err := getDNS01Provider(dns01)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = ai.client.Challenge.SetDNS01Provider(provider, getDNS01Opts()...)
 	if err != nil {
-		return nil, fmt.Errorf("error setting DNS01 provider: %w", err)
+		return nil, nil, fmt.Errorf("error setting DNS01 provider: %w", err)
 	}
 
-	err = user.register(ai.client)
-	if err != nil {
-		return nil, err
+	var userChanged bool
+	if user.Registration == nil {
+		userChanged = true
+		user.Registration, err = ai.client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		if err != nil {
+			return nil, nil, fmt.Errorf("error registering account: %w", err)
+		}
+	} else if user.Email != email {
+		userChanged = true
+		user.Email = email
+		user.Registration, err = ai.client.Registration.UpdateRegistration(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		if err != nil {
+			return nil, nil, fmt.Errorf("error updating registration email: %w", err)
+		}
 	}
 
-	ai.accountString, err = keyToString(user.key)
-	if err != nil {
-		return nil, err
+	if userChanged {
+		userRet, err := user.stringMap()
+		if err != nil {
+			return nil, nil, fmt.Errorf("error converting user to string map: %w", err)
+		}
+		return ai, userRet, nil
 	}
-
-	return ai, nil
+	return ai, nil, nil
 }
 
 func getDNS01Opts() []dns01.ChallengeOption {
@@ -172,14 +192,14 @@ func (a *ACMEIssuer) Account() string {
 }
 
 type acmeUser struct {
-	email        string
-	key          crypto.PrivateKey
-	registration *registration.Resource
+	Email        string                 `json:"email"`
+	Registration *registration.Resource `json:"registration"`
+	key          crypto.PrivateKey      `json:"-"`
 }
 
 // GetEmail implements registration.User
 func (u *acmeUser) GetEmail() string {
-	return u.email
+	return u.Email
 }
 
 // GetPrivateKey implements registration.User
@@ -189,22 +209,50 @@ func (u *acmeUser) GetPrivateKey() crypto.PrivateKey {
 
 // GetRegistration implements registration.User
 func (u *acmeUser) GetRegistration() *registration.Resource {
-	return u.registration
+	return u.Registration
 }
 
-// Register with the ACME server, generating an account key if necessary.
-func (u *acmeUser) register(client *lego.Client) error {
-	var err error
-	u.registration, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-	if err != nil {
-		return err
-	}
-	if len(u.registration.Body.Contact) == 0 || strings.EqualFold(u.registration.Body.Contact[0], u.email) {
-		_, err = client.Registration.UpdateRegistration(registration.RegisterOptions{TermsOfServiceAgreed: true})
-		if err != nil {
-			return err
-		}
+func userFromMap(m map[string]string) (*acmeUser, error) {
+	if len(m) != 2 || m[accountMapPrivateKey] == "" || m[accountMapUser] == "" {
+		return nil, nil
 	}
 
-	return nil
+	d := json.NewDecoder(strings.NewReader(m[accountMapUser]))
+	d.DisallowUnknownFields()
+
+	u := &acmeUser{}
+	err := d.Decode(u)
+	if err != nil {
+		return nil, err
+	}
+
+	derBytes, err := base64.StdEncoding.DecodeString(m[accountMapPrivateKey])
+	if err != nil {
+		return nil, err
+	}
+
+	u.key, err = x509.ParsePKCS8PrivateKey(derBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
+func (u *acmeUser) stringMap() (map[string]string, error) {
+	ret := make(map[string]string, 2)
+	userBytes, err := json.Marshal(u)
+	if err != nil {
+		return nil, err
+	}
+	ret[accountMapUser] = string(userBytes)
+
+	derBytes, err := x509.MarshalPKCS8PrivateKey(u.key)
+	if err != nil {
+		return nil, err
+	}
+
+	ret[accountMapPrivateKey] = base64.StdEncoding.EncodeToString(derBytes)
+
+	return ret, nil
 }
