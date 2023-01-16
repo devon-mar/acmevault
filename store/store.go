@@ -8,6 +8,6 @@ type Store interface {
 	Retrieve(cn string) (*cert.Bundle, error)
 	Store(*cert.Bundle) error
 
-	StoreAccount(string) error
-	RetrieveAccount() (string, error)
+	StoreAccount(map[string]string) error
+	RetrieveAccount() (map[string]string, error)
 }
