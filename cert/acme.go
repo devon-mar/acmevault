@@ -74,8 +74,10 @@ func NewACMEIssuer(account map[string]string) (*ACMEIssuer, map[string]string, e
 		if err != nil {
 			return nil, nil, err
 		}
-	} else {
-		// Otherwise create a new one
+	}
+	if user == nil {
+		// Otherwise create a new one if the account doesn't exist
+		// or is invalid
 		log.Infof("Generating new ACME account key")
 		user = &acmeUser{Email: email}
 		user.key, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
