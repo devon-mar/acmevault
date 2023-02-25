@@ -32,7 +32,7 @@ services:
       - 8443:443
       - 8080:80
   temptxt:
-    image: devonm/coredns:latest
+    image: ghcr.io/devon-mar/coredns-build:latest
     volumes:
       - ./Corefile:/Corefile:ro
     ports:
