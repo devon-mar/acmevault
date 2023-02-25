@@ -10,5 +10,4 @@
         @       300     IN      NS      ns.example.com.
         ns      300     IN      A       127.0.0.1
     }
-    log
 }
