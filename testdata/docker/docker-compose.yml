@@ -3,7 +3,7 @@ version: "3.9"
 
 services:
   vault:
-    image: vault:latest
+    image: hashicorp/vault:latest
     environment:
       SKIP_SETCAP: "true"
       VAULT_DEV_ROOT_TOKEN_ID: 4840549d-6897-4ab1-a414-2a971ff8bdde
