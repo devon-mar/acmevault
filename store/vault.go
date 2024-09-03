@@ -22,9 +22,9 @@ const (
 	EnvVaultCertAuth      = "VAULT_CERT_AUTH"
 	EnvVaultCertAuthRole  = "VAULT_CERT_AUTH_ROLE"
 
-	VaultKVKeyCert = "cert"
-	VaultKVKeyKey  = "key"
-	VaultKVKeyCA   = "ca"
+	VaultKVKeyCert = "tls.crt"
+	VaultKVKeyKey  = "tls.key"
+	VaultKVKeyCA   = "ca.crt"
 	VaultKVKeyPFX  = "pfx"
 )
 
