@@ -186,7 +186,7 @@ type vaultCertAuth struct {
 func (a *vaultCertAuth) Login(ctx context.Context, client *vault.Client) (*vault.Secret, error) {
 	data := map[string]interface{}{"name": a.Role}
 
-	path := fmt.Sprintf("auth/" + a.Mount + "/login")
+	path := "auth/" + a.Mount + "/login"
 
 	resp, err := client.Logical().WriteWithContext(ctx, path, data)
 	if err != nil {
