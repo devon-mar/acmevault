@@ -2,7 +2,6 @@ package cert
 
 import (
 	"crypto"
-	"crypto/rand"
 	"crypto/x509"
 	"errors"
 
@@ -69,5 +68,5 @@ func BundleFromBytes(cert []byte, key []byte, ca []byte) (*Bundle, error) {
 }
 
 func (cb *Bundle) PFX() ([]byte, error) {
-	return pkcs12.Encode(rand.Reader, cb.PrivateKey, cb.Certificate, cb.CA, "")
+	return pkcs12.Legacy.Encode(cb.PrivateKey, cb.Certificate, cb.CA, "")
 }
