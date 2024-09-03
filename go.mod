@@ -1,11 +1,10 @@
 module github.com/devon-mar/acmevault
 
-go 1.18
+go 1.22
 
 require (
 	github.com/go-acme/lego/v4 v4.13.3
 	github.com/hashicorp/vault/api v1.9.2
-	github.com/sirupsen/logrus v1.9.3
 	software.sslmate.com/src/go-pkcs12 v0.2.1
 )
 
@@ -113,6 +112,7 @@ require (
 	github.com/sacloud/packages-go v0.0.9 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.17 // indirect
 	github.com/simplesurance/bunny-go v0.0.0-20221115111006-e11d9dc91f04 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smartystreets/go-aws-auth v0.0.0-20180515143844-0c1422d1fdb9 // indirect
 	github.com/softlayer/softlayer-go v1.1.2 // indirect
 	github.com/softlayer/xmlrpc v0.0.0-20200409220501-5f089df7cb7e // indirect

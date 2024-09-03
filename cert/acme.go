@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -20,8 +22,6 @@ import (
 	"github.com/go-acme/lego/v4/lego"
 	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/go-acme/lego/v4/registration"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -44,7 +44,7 @@ type ACMEIssuer struct {
 }
 
 func init() {
-	legolog.Logger = log.StandardLogger()
+	legolog.Logger = log.Default()
 }
 
 func NewACMEIssuer(account map[string]string) (*ACMEIssuer, map[string]string, error) {
@@ -78,7 +78,7 @@ func NewACMEIssuer(account map[string]string) (*ACMEIssuer, map[string]string, e
 	if user == nil {
 		// Otherwise create a new one if the account doesn't exist
 		// or is invalid
-		log.Infof("Generating new ACME account key")
+		slog.Info("Generating new ACME account key")
 		user = &acmeUser{Email: email}
 		user.key, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 		if err != nil {
@@ -168,7 +168,7 @@ func (a *ACMEIssuer) Issue(req CertRequest) (*Bundle, error) {
 	pk := req.PrivateKey
 	var err error
 	if pk == nil {
-		log.Debugf("No private key provided. Generating one...")
+		slog.Debug("No private key provided. Generating one...")
 		pk, err = generateKey(req.KeyType)
 		if err != nil {
 			return nil, fmt.Errorf("error generating key: %w", err)

@@ -2,12 +2,12 @@ package main
 
 import (
 	"crypto/x509"
+	"log/slog"
 	"os"
 	"time"
 
 	"github.com/devon-mar/acmevault/cert"
 	"github.com/devon-mar/acmevault/store"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -16,10 +16,12 @@ var (
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
+	// TODO
+	// log.SetLevel(log.DebugLevel)
 	cfg, err := configFromEnv()
 	if err != nil {
-		log.WithError(err).Fatal("config error")
+		slog.Error("config error", "err", err)
+		os.Exit(1)
 	}
 
 	exitFunc(run(
@@ -30,34 +32,34 @@ func main() {
 }
 
 func run(cfg *config, newStore func() (store.Store, error), newIssuer func(map[string]string) (cert.Issuer, map[string]string, error)) int {
-	log.Infof("Found %d cert(s)", len(cfg.certs))
+	slog.Info("acmevault starting", "numCerts", len(cfg.certs))
 	av := &acmeVault{}
 
 	var err error
 	av.store, err = newStore()
 	if err != nil {
-		log.WithError(err).Error("error initializing cert store")
+		slog.Error("error initializing cert store", "err", err)
 		return 1
 	}
 
 	account, err := av.store.RetrieveAccount()
 	if err != nil {
-		log.WithError(err).Error("error retrieving account from store")
+		slog.Error("error retrieving account from store", "err", err)
 		return 1
 	}
 
 	var accountToStore map[string]string
 	av.issuer, accountToStore, err = newIssuer(account)
 	if err != nil {
-		log.WithError(err).Error("error initializing cert issuer")
+		slog.Error("error initializing cert issuer", "err", err)
 		return 1
 	}
 
 	if accountToStore != nil {
-		log.Info("Account has changed")
+		slog.Info("Account has changed")
 		// Update the account if different
 		if err = av.store.StoreAccount(accountToStore); err != nil {
-			log.WithError(err).Error("error storing issuer account in store")
+			slog.Error("error storing issuer account in store", "err", err)
 			return 1
 		}
 	}
@@ -65,7 +67,7 @@ func run(cfg *config, newStore func() (store.Store, error), newIssuer func(map[s
 	var ret int
 	for _, c := range cfg.certs {
 		if err := av.processCert(c); err != nil {
-			log.WithError(err).Errorf("error processing cert %v", c.Domains)
+			slog.Error("error processing cert", "domains", c.Domains, "err", err)
 			ret++
 			if cfg.exitOnError {
 				break
@@ -83,8 +85,8 @@ type acmeVault struct {
 
 func (av *acmeVault) processCert(cc certConfig) error {
 	cn := cc.Domains[0]
-	logger := log.WithField("cn", cn)
-	logger.Infof("Processing %s", cn)
+	logger := slog.With("cn", cn)
+	logger.Info("Processing")
 
 	oldCb, err := av.store.Retrieve(cn)
 	if err != nil {
@@ -107,7 +109,7 @@ func (av *acmeVault) processCert(cc certConfig) error {
 		if err != nil {
 			return err
 		}
-		logger.Infof("Successfully obtained")
+		logger.Info("Successfully obtained")
 		return av.store.Store(cb)
 	}
 	return nil

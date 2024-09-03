@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,8 +13,6 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v4/challenge/dns01"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -93,7 +92,7 @@ func (p *TempTXTProvider) set(fqdn string, value string) error {
 	if p.debug {
 		req.Header.Set(tempTxtDebugHeader, tempTxtDebugUser)
 	}
-	log.WithFields(log.Fields{"fqdn": fqdn, "content": value}).Debugf("Sending update to %q", p.url)
+	slog.Debug("Sending update", "url", p.url, "fqdn", fqdn, "content", value)
 	r, err := p.client.Do(req)
 	if err != nil {
 		return err
