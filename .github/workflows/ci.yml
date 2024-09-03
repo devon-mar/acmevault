@@ -46,7 +46,7 @@ jobs:
 
       - name: Pull container images
         run: |
-          docker-compose pull
+          docker compose pull
         working-directory: testdata/docker
 
       - name: Run tests

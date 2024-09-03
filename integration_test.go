@@ -270,8 +270,8 @@ func dockerUp() error {
 }
 
 func composeCmd(args ...string) error {
-	args = append([]string{"-p", composeProjectName}, args...)
-	cmd := exec.Command("docker-compose", args...)
+	args = append([]string{"compose", "-p", composeProjectName}, args...)
+	cmd := exec.Command("docker", args...)
 	cmd.Dir = "testdata/docker"
 	return cmd.Run()
 }
