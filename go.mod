@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/go-acme/lego/v4 v4.13.3
 	github.com/hashicorp/vault/api v1.14.0
-	software.sslmate.com/src/go-pkcs12 v0.2.1
+	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
 require (
