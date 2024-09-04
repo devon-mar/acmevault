@@ -119,10 +119,6 @@ func (av *acmeVault) processCert(cc certConfig, checkMode bool) error {
 	if oldCb == nil || shouldRenew(oldCb.Certificate, time.Now()) {
 		logger.Info("Obtaining a new certificate")
 
-		if checkMode {
-			return nil
-		}
-
 		req := cc.CertRequest
 		if oldCb != nil && cc.reuseKey {
 			logger.Info("Reusing private key")
@@ -135,6 +131,12 @@ func (av *acmeVault) processCert(cc certConfig, checkMode bool) error {
 		logger.Info("Successfully obtained")
 		return av.store.Store(cb)
 	}
+
+	if checkMode {
+		logger.Info("certificate ok", "notAfter", oldCb.Certificate.NotAfter)
+		return nil
+	}
+
 	return nil
 }
 
