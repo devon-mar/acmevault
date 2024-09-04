@@ -53,9 +53,6 @@ func NewVaultStore() (*VaultStore, error) {
 	vs.accountPath = cleanPath(vs.accountPath)
 
 	vaultCfg := vault.DefaultConfig()
-	if err != nil {
-		return nil, err
-	}
 
 	vs.client, err = vault.NewClient(vaultCfg)
 	if err != nil {
