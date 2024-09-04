@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/ecdsa"
@@ -305,10 +306,16 @@ func (ao *assertOptions) assert(t *testing.T, v *vault.Client, wantVersion int) 
 	}
 	pub := data.Data[store.VaultKVKeyCert].(string)
 	key := data.Data[store.VaultKVKeyKey].(string)
-	ca := data.Data[store.VaultKVKeyCA].(string)
+	caRaw := data.Data[store.VaultKVKeyCA].([]interface{})
+	// TODO refactor
+	cas := make([][]byte, len(caRaw))
+	for i, raw := range caRaw {
+		cas[i] = []byte(raw.(string))
+	}
+
 	pfx := data.Data[store.VaultKVKeyPFX].(string)
 
-	cb, err := cert.BundleFromBytes([]byte(pub), []byte(key), []byte(ca))
+	cb, err := cert.BundleFromBytes([]byte(pub), []byte(key), bytes.Join(cas, []byte("\n")))
 	if err != nil {
 		t.Errorf("error parsing cert: %v", err)
 	}
@@ -378,10 +385,17 @@ func (ao *assertOptions) assert(t *testing.T, v *vault.Client, wantVersion int) 
 			t.Fatalf("error reading vault version %d: %v", wantVersion, err)
 		}
 
+		// TODO refactor
+		caRaw := oldData.Data[store.VaultKVKeyCA].([]interface{})
+		cas := make([][]byte, len(caRaw))
+		for i, raw := range caRaw {
+			cas[i] = []byte(raw.(string))
+		}
+
 		oldCb, err := cert.BundleFromBytes(
 			[]byte(oldData.Data[store.VaultKVKeyCert].(string)),
 			[]byte(oldData.Data[store.VaultKVKeyKey].(string)),
-			[]byte(oldData.Data[store.VaultKVKeyCA].(string)),
+			bytes.Join(cas, []byte("\n")),
 		)
 		if err != nil {
 			t.Fatalf("error parsing cert: %v", err)

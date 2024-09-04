@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -87,18 +88,28 @@ func (s *VaultStore) Retrieve(cn string) (*cert.Bundle, error) {
 
 	certificate, ok := data.Data[VaultKVKeyCert].(string)
 	if !ok {
-		return nil, fmt.Errorf("%s:%s wasn't a string", s.certsPath, VaultKVKeyCert)
+		return nil, fmt.Errorf("%s: %s wasn't a string", s.certsPath, VaultKVKeyCert)
 	}
 	key, ok := data.Data[VaultKVKeyKey].(string)
 	if !ok {
-		return nil, fmt.Errorf("%s:%s wasn't a string", s.certsPath, VaultKVKeyKey)
+		return nil, fmt.Errorf("%s: %s wasn't a string", s.certsPath, VaultKVKeyKey)
 	}
-	ca, ok := data.Data[VaultKVKeyCA].(string)
+	caRaw, ok := data.Data[VaultKVKeyCA].([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("%s:%s wasn't a string", s.certsPath, VaultKVKeyCA)
+		return nil, fmt.Errorf("%s: %s wasn't a []string", s.certsPath, VaultKVKeyCA)
 	}
 
-	return cert.BundleFromBytes([]byte(certificate), []byte(key), []byte(ca))
+	// TODO refactor
+	cas := make([][]byte, len(caRaw))
+	for i, raw := range caRaw {
+		str, ok := raw.(string)
+		if !ok {
+			return nil, fmt.Errorf("%s: %s[%d] wasn't a string", s.certsPath, VaultKVKeyCA, i)
+		}
+		cas[i] = []byte(str)
+	}
+
+	return cert.BundleFromBytes([]byte(certificate), []byte(key), bytes.Join(cas, []byte("\n")))
 }
 
 func (s *VaultStore) certPath(cn string) string {
@@ -140,7 +151,7 @@ func (s *VaultStore) Store(cb *cert.Bundle) error {
 
 	data := map[string]interface{}{
 		VaultKVKeyCert: cb.CertString(),
-		VaultKVKeyCA:   cb.CAString(),
+		VaultKVKeyCA:   cb.CAStrings(),
 		VaultKVKeyKey:  keyString,
 		VaultKVKeyPFX:  base64.StdEncoding.EncodeToString(pfxBytes),
 	}

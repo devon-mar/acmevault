@@ -22,8 +22,12 @@ func (cb *Bundle) CertString() string {
 	return string(certsToString(cb.Certificate))
 }
 
-func (cb *Bundle) CAString() string {
-	return string(certsToString(cb.CA...))
+func (cb *Bundle) CAStrings() []string {
+	strs := make([]string, len(cb.CA))
+	for i, ca := range cb.CA {
+		strs[i] = certsToString(ca)
+	}
+	return strs
 }
 
 func (cb *Bundle) KeyString() (string, error) {
