@@ -337,6 +337,7 @@ func TestRun(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			have := run(
 				tc.config,
+				false,
 				func() (store.Store, error) { return tc.store, tc.storeError },
 				func(m map[string]string) (cert.Issuer, map[string]string, error) {
 					return tc.issuer, tc.accountToStore, tc.issuerError

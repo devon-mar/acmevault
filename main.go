@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/x509"
+	"flag"
 	"log/slog"
 	"os"
 	"time"
@@ -13,11 +14,28 @@ import (
 var (
 	exitFunc        func(int) = os.Exit
 	testShouldRenew           = false
+
+	checkMode   = flag.Bool("check", false, "Check the status of existing certificates without issuing any certificates.")
+	logLevelStr = flag.String("log-level", "info", "Log level.")
 )
 
+func configureLogging(level slog.Leveler) {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: level,
+	}))
+	slog.SetDefault(logger)
+}
+
 func main() {
-	// TODO
-	// log.SetLevel(log.DebugLevel)
+	flag.Parse()
+
+	var logLevel slog.Level
+	if err := logLevel.UnmarshalText([]byte(*logLevelStr)); err != nil {
+		slog.Error("error parsing log-level", "err", err)
+		os.Exit(1)
+	}
+	configureLogging(logLevel)
+
 	cfg, err := configFromEnv()
 	if err != nil {
 		slog.Error("config error", "err", err)
@@ -26,12 +44,13 @@ func main() {
 
 	exitFunc(run(
 		cfg,
+		*checkMode,
 		func() (store.Store, error) { return store.NewVaultStore() },
 		func(a map[string]string) (cert.Issuer, map[string]string, error) { return cert.NewACMEIssuer(a) },
 	))
 }
 
-func run(cfg *config, newStore func() (store.Store, error), newIssuer func(map[string]string) (cert.Issuer, map[string]string, error)) int {
+func run(cfg *config, checkMode bool, newStore func() (store.Store, error), newIssuer func(map[string]string) (cert.Issuer, map[string]string, error)) int {
 	slog.Info("acmevault starting", "numCerts", len(cfg.certs))
 	av := &acmeVault{}
 
@@ -66,7 +85,7 @@ func run(cfg *config, newStore func() (store.Store, error), newIssuer func(map[s
 
 	var ret int
 	for _, c := range cfg.certs {
-		if err := av.processCert(c); err != nil {
+		if err := av.processCert(c, checkMode); err != nil {
 			slog.Error("error processing cert", "domains", c.Domains, "err", err)
 			ret++
 			if cfg.exitOnError {
@@ -83,7 +102,7 @@ type acmeVault struct {
 	issuer cert.Issuer
 }
 
-func (av *acmeVault) processCert(cc certConfig) error {
+func (av *acmeVault) processCert(cc certConfig, checkMode bool) error {
 	cn := cc.Domains[0]
 	logger := slog.With("cn", cn)
 	logger.Info("Processing")
@@ -99,6 +118,10 @@ func (av *acmeVault) processCert(cc certConfig) error {
 
 	if oldCb == nil || shouldRenew(oldCb.Certificate, time.Now()) {
 		logger.Info("Obtaining a new certificate")
+
+		if checkMode {
+			return nil
+		}
 
 		req := cc.CertRequest
 		if oldCb != nil && cc.reuseKey {
