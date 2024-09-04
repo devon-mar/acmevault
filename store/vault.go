@@ -16,9 +16,6 @@ const (
 	EnvVaultKVMount       = "VAULT_KV_MOUNT"
 	EnvVaultKVCertsPath   = "VAULT_KV_CERTS_PATH"
 	EnvVaultKVAccountPath = "VAULT_KV_ACCOUNT_PATH"
-	EnvVaultClientCert    = "VAULT_CLIENT_CERT_PATH"
-	EnvVaultClientKey     = "VAULT_CLIENT_KEY_PATH"
-	EnvVaultCACert        = "VAULT_CA_PATH"
 	EnvVaultCertAuth      = "VAULT_CERT_AUTH"
 	EnvVaultCertAuthRole  = "VAULT_CERT_AUTH_ROLE"
 
@@ -55,11 +52,6 @@ func NewVaultStore() (*VaultStore, error) {
 	vs.accountPath = cleanPath(vs.accountPath)
 
 	vaultCfg := vault.DefaultConfig()
-	err = vaultCfg.ConfigureTLS(&vault.TLSConfig{
-		CACert:     os.Getenv(EnvVaultCACert),
-		ClientCert: os.Getenv(EnvVaultClientCert),
-		ClientKey:  os.Getenv(EnvVaultClientKey),
-	})
 	if err != nil {
 		return nil, err
 	}

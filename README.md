@@ -32,9 +32,9 @@ test.example.com,muststaple=true,keytype=EC256
 | `VAULT_KV_MOUNT` | string | true | | Vault KVv2 mount path. |
 | `VAULT_KV_CERTS_PATH` | string | true | | Path to store the certificates. The certificate CN will be appended. |
 | `VAULT_KV_ACCOUNT_PATH` | string | true | | KVv2 path to store the ACME account. |
-| `VAULT_CA` | string | false | | The path to a PEM-encoded CA cert file to use to verify the Vault server SSL certificate. |
-| `VAULT_CLIENT_CERT_PATH` | string | false | | Vault client certificate. |
-| `VAULT_CLIENT_KEY_PATH` | string | false | | Vault client private key. |
+| `VAULT_CACERT` | string | false | | The path to a PEM-encoded CA cert file to use to verify the Vault server SSL certificate. |
+| `VAULT_CLIENT_CERT` | string | false | | Vault client certificate. |
+| `VAULT_CLIENT_KEY` | string | false | | Vault client private key. |
 | `VAULT_CERT_AUTH` | string | false | | Vault cert auth path. |
 | `VAULT_CERT_AUTH_ROLE` | string | false | | Vault cert auth role. |
 
