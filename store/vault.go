@@ -24,7 +24,7 @@ const (
 
 	VaultKVKeyCert = "tls.crt"
 	VaultKVKeyKey  = "tls.key"
-	VaultKVKeyCA   = "ca.crt"
+	VaultKVKeyCA   = "ca"
 	VaultKVKeyPFX  = "pfx"
 )
 
