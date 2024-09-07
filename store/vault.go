@@ -1,7 +1,6 @@
 package store
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -106,7 +105,7 @@ func (s *VaultStore) Retrieve(cn string) (*cert.Bundle, error) {
 		cas[i] = []byte(str)
 	}
 
-	return cert.BundleFromBytes([]byte(certificate), []byte(key), bytes.Join(cas, []byte("\n")))
+	return cert.BundleFromBytes([]byte(certificate), []byte(key), cas)
 }
 
 func (s *VaultStore) certPath(cn string) string {

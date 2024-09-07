@@ -4,12 +4,9 @@ import (
 	"crypto"
 	"crypto/x509"
 	"errors"
+	"fmt"
 
 	"software.sslmate.com/src/go-pkcs12"
-)
-
-const (
-	caChainLimit = 11
 )
 
 type Bundle struct {
@@ -34,7 +31,7 @@ func (cb *Bundle) KeyString() (string, error) {
 	return keyToString(cb.PrivateKey)
 }
 
-func BundleFromBytes(cert []byte, key []byte, ca []byte) (*Bundle, error) {
+func BundleFromBytes(cert []byte, key []byte, ca [][]byte) (*Bundle, error) {
 	cb := &Bundle{}
 
 	var err error
@@ -50,15 +47,16 @@ func BundleFromBytes(cert []byte, key []byte, ca []byte) (*Bundle, error) {
 		cb.Certificate = parsed[0]
 	}
 
-	if ca != nil {
-		parsed, err = bytesToCerts(ca, caChainLimit)
+	cb.CA = make([]*x509.Certificate, len(ca))
+	for i, rawCa := range ca {
+		parsed, err = bytesToCerts(rawCa, 1)
 		if err != nil {
 			return nil, err
 		}
 		if len(parsed) == 0 {
-			return nil, errors.New("got 0 issuer certificates")
+			return nil, fmt.Errorf("no ca at %d", i)
 		}
-		cb.CA = parsed
+		cb.CA[i] = parsed[0]
 	}
 
 	if key != nil {

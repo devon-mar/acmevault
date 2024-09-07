@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"log"
@@ -36,6 +37,8 @@ const (
 
 	accountMapUser       = "registration"
 	accountMapPrivateKey = "private_key"
+
+	maxChainLen = 11
 )
 
 type ACMEIssuer struct {
@@ -185,7 +188,23 @@ func (a *ACMEIssuer) Issue(req CertRequest) (*Bundle, error) {
 		return nil, err
 	}
 
-	return BundleFromBytes(resp.Certificate, resp.PrivateKey, resp.IssuerCertificate)
+	// Split the issuer certificates
+	var issuerCerts [][]byte
+	rest := resp.IssuerCertificate
+	for {
+		var block *pem.Block
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+		issuerCerts = append(issuerCerts, pem.EncodeToMemory(block))
+
+		if len(issuerCerts) > maxChainLen {
+			return nil, errors.New("issuer certificates too long")
+		}
+	}
+
+	return BundleFromBytes(resp.Certificate, resp.PrivateKey, issuerCerts)
 }
 
 // Account implements Issuer
