@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"os"
@@ -77,6 +78,29 @@ func mustAbsolute(p string) string {
 		panic(err)
 	}
 	return abs
+}
+
+func bytesToCerts(b []byte, limit int) ([]*x509.Certificate, error) {
+	rest := b
+
+	ret := []*x509.Certificate{}
+
+	for i := 0; i < limit; i++ {
+		var decoded *pem.Block
+		decoded, rest = pem.Decode(rest)
+		if decoded == nil {
+			break
+		} else if decoded.Type != "CERTIFICATE" {
+			return nil, fmt.Errorf("got unexpected block type %q for public key", decoded.Type)
+		}
+		c, err := x509.ParseCertificate(decoded.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing certificate: %w", err)
+		}
+		ret = append(ret, c)
+	}
+
+	return ret, nil
 }
 
 func TestMain(t *testing.T) {
@@ -304,6 +328,7 @@ func (ao *assertOptions) assert(t *testing.T, v *vault.Client, wantVersion int) 
 		t.Errorf("expected secret version %d, got %d", wantVersion, data.VersionMetadata.Version)
 	}
 	pub := data.Data[store.VaultKVKeyCert].(string)
+	chainRaw := data.Data[store.VaultKVKeyChain].(string)
 	key := data.Data[store.VaultKVKeyKey].(string)
 	caRaw := data.Data[store.VaultKVKeyCA].([]interface{})
 	cas := make([][]byte, len(caRaw))
@@ -357,6 +382,24 @@ func (ao *assertOptions) assert(t *testing.T, v *vault.Client, wantVersion int) 
 	}
 	if !reflect.DeepEqual(pfxCAs, cb.CA) {
 		t.Errorf("PFX CAs doesn't match")
+	}
+
+	chainCerts, err := bytesToCerts([]byte(chainRaw), 100)
+	if err != nil {
+		t.Fatalf("error parsing chain: %v", err)
+	}
+	// +1 for the issued cert iself
+	if len(chainCerts) != (1 + len(cb.CA)) {
+		t.Errorf("expected %d certs in chain, got %d", (1 + len(cas)), len(cb.CA))
+	} else {
+		if !cb.Certificate.Equal(chainCerts[0]) {
+			t.Errorf("expected first cert in chain to equal the issued cert, got: %#v", chainCerts)
+		}
+		for i, c := range chainCerts[1:] {
+			if !cb.CA[i].Equal(c) {
+				t.Errorf("expected cert %d in chain to equal ca %d, got: %#v", (1 + i), i, c)
+			}
+		}
 	}
 
 	var keyType string

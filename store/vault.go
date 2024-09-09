@@ -19,10 +19,11 @@ const (
 	EnvVaultCertAuth      = "VAULT_CERT_AUTH"
 	EnvVaultCertAuthRole  = "VAULT_CERT_AUTH_ROLE"
 
-	VaultKVKeyCert = "tls.crt"
-	VaultKVKeyKey  = "tls.key"
-	VaultKVKeyCA   = "ca"
-	VaultKVKeyPFX  = "pfx"
+	VaultKVKeyCert  = "cert"
+	VaultKVKeyChain = "tls.crt"
+	VaultKVKeyKey   = "tls.key"
+	VaultKVKeyCA    = "ca"
+	VaultKVKeyPFX   = "pfx"
 )
 
 type VaultStore struct {
@@ -146,10 +147,11 @@ func (s *VaultStore) Store(cb *cert.Bundle) error {
 	}
 
 	data := map[string]interface{}{
-		VaultKVKeyCert: cb.CertString(),
-		VaultKVKeyCA:   cb.CAStrings(),
-		VaultKVKeyKey:  keyString,
-		VaultKVKeyPFX:  base64.StdEncoding.EncodeToString(pfxBytes),
+		VaultKVKeyCert:  cb.CertString(),
+		VaultKVKeyChain: cb.ChainString(),
+		VaultKVKeyCA:    cb.CAStrings(),
+		VaultKVKeyKey:   keyString,
+		VaultKVKeyPFX:   base64.StdEncoding.EncodeToString(pfxBytes),
 	}
 	_, err = s.kv().Put(context.Background(), s.certPath(cb.Certificate.Subject.CommonName), data)
 	return err

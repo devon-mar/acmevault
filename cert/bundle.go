@@ -19,6 +19,12 @@ func (cb *Bundle) CertString() string {
 	return string(certsToString(cb.Certificate))
 }
 
+func (cb *Bundle) ChainString() string {
+	certs := []*x509.Certificate{cb.Certificate}
+	certs = append(certs, cb.CA...)
+	return string(certsToString(certs...))
+}
+
 func (cb *Bundle) CAStrings() []string {
 	strs := make([]string, len(cb.CA))
 	for i, ca := range cb.CA {
