@@ -5,7 +5,7 @@ go 1.22.1
 toolchain go1.22.4
 
 require (
-	github.com/go-acme/lego/v4 v4.20.2
+	github.com/go-acme/lego/v4 v4.20.4
 	github.com/hashicorp/vault/api v1.15.0
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
