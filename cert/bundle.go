@@ -3,9 +3,9 @@ package cert
 import (
 	"crypto"
 	"crypto/x509"
-	"errors"
 	"fmt"
 
+	"github.com/devon-mar/pkiutil"
 	"software.sslmate.com/src/go-pkcs12"
 )
 
@@ -34,41 +34,36 @@ func (cb *Bundle) CAStrings() []string {
 }
 
 func (cb *Bundle) KeyString() (string, error) {
-	return keyToString(cb.PrivateKey)
+	b, err := pkiutil.MarshalPrivateKey(cb.PrivateKey)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func BundleFromBytes(cert []byte, key []byte, ca [][]byte) (*Bundle, error) {
 	cb := &Bundle{}
 
 	var err error
-	var parsed []*x509.Certificate
 	if cert != nil {
-		parsed, err = bytesToCerts(cert, 1)
+		cb.Certificate, err = pkiutil.ParseCertificate(cert)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse: %w", err)
 		}
-		if len(parsed) == 0 {
-			return nil, errors.New("got 0 certificates")
-		}
-		cb.Certificate = parsed[0]
 	}
 
 	cb.CA = make([]*x509.Certificate, len(ca))
 	for i, rawCa := range ca {
-		parsed, err = bytesToCerts(rawCa, 1)
+		cb.CA[i], err = pkiutil.ParseCertificate(rawCa)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse: %w", err)
 		}
-		if len(parsed) == 0 {
-			return nil, fmt.Errorf("no ca at %d", i)
-		}
-		cb.CA[i] = parsed[0]
 	}
 
 	if key != nil {
-		cb.PrivateKey, err = bytesToKey(key)
+		cb.PrivateKey, err = pkiutil.ParsePrivateKey(key)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse: %w", err)
 		}
 	}
 

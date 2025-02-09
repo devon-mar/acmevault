@@ -1,10 +1,11 @@
 module github.com/devon-mar/acmevault
 
-go 1.22.1
+go 1.22.8
 
-toolchain go1.22.4
+toolchain go1.23.3
 
 require (
+	github.com/devon-mar/pkiutil v0.0.0-20250209022220-e98cf05e8783
 	github.com/go-acme/lego/v4 v4.21.0
 	github.com/hashicorp/vault/api v1.15.0
 	software.sslmate.com/src/go-pkcs12 v0.5.0
