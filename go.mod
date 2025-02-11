@@ -7,7 +7,7 @@ toolchain go1.23.3
 require (
 	github.com/devon-mar/pkiutil v0.0.0-20250209022220-e98cf05e8783
 	github.com/go-acme/lego/v4 v4.21.0
-	github.com/hashicorp/vault/api v1.15.0
+	github.com/hashicorp/vault/api v1.16.0
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
@@ -187,13 +187,13 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20241210194714-1829a127f884 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
