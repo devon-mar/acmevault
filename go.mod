@@ -6,7 +6,7 @@ toolchain go1.23.3
 
 require (
 	github.com/devon-mar/pkiutil v0.0.0-20250209022220-e98cf05e8783
-	github.com/go-acme/lego/v4 v4.21.0
+	github.com/go-acme/lego/v4 v4.22.2
 	github.com/hashicorp/vault/api v1.16.0
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
@@ -56,7 +56,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/civo/civogo v0.3.75 // indirect
 	github.com/cloudflare/cloudflare-go v0.112.0 // indirect
-	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dnsimple/dnsimple-go v1.7.0 // indirect
@@ -127,6 +126,7 @@ require (
 	github.com/nrdcg/desec v0.10.0 // indirect
 	github.com/nrdcg/dnspod-go v0.4.0 // indirect
 	github.com/nrdcg/freemyip v0.3.0 // indirect
+	github.com/nrdcg/goacmedns v0.2.0 // indirect
 	github.com/nrdcg/goinwx v0.10.0 // indirect
 	github.com/nrdcg/mailinabox v0.2.0 // indirect
 	github.com/nrdcg/namesilo v0.2.1 // indirect
