@@ -5,5 +5,5 @@ linters:
     - misspell
     - bodyclose
     - forbidigo
-    - exportloopref
+    - copyloopvar
     - sloglint
