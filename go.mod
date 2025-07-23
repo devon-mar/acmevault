@@ -8,7 +8,7 @@ require (
 	github.com/devon-mar/pkiutil v0.0.0-20250209022220-e98cf05e8783
 	github.com/go-acme/lego/v4 v4.22.2
 	github.com/hashicorp/vault/api v1.20.0
-	software.sslmate.com/src/go-pkcs12 v0.5.0
+	software.sslmate.com/src/go-pkcs12 v0.6.0
 )
 
 require (
