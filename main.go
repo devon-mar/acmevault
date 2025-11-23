@@ -129,7 +129,7 @@ func (av *acmeVault) processCert(cc certConfig, checkMode bool) error {
 			return err
 		}
 		logger.Info("Successfully obtained")
-		return av.store.Store(cb)
+		return av.store.Store(cc.Domains[0], cb)
 	}
 
 	if checkMode {

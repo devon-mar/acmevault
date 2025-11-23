@@ -123,12 +123,11 @@ func (s *testStore) RetrieveAccount() (map[string]string, error) {
 }
 
 // Store implements store.Store
-func (s *testStore) Store(cb *cert.Bundle) error {
-	cn := cb.Certificate.Subject.CommonName
-	if cn == "storeerror.example.com" {
+func (s *testStore) Store(key string, cb *cert.Bundle) error {
+	if key == "storeerror.example.com" {
 		return errors.New("got store error cert")
 	}
-	s.stored = append(s.stored, cb.Certificate.Subject.CommonName)
+	s.stored = append(s.stored, key)
 	return nil
 }
 

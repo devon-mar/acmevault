@@ -109,8 +109,8 @@ func (s *VaultStore) Retrieve(cn string) (*cert.Bundle, error) {
 	return cert.BundleFromBytes([]byte(certificate), []byte(key), cas)
 }
 
-func (s *VaultStore) certPath(cn string) string {
-	return s.certsPath + "/" + cn
+func (s *VaultStore) certPath(key string) string {
+	return s.certsPath + "/" + key
 }
 
 // RetrieveAccount implements Store
@@ -135,7 +135,7 @@ func (s *VaultStore) RetrieveAccount() (map[string]string, error) {
 }
 
 // Store implements Store
-func (s *VaultStore) Store(cb *cert.Bundle) error {
+func (s *VaultStore) Store(key string, cb *cert.Bundle) error {
 	keyString, err := cb.KeyString()
 	if err != nil {
 		return err
@@ -153,7 +153,7 @@ func (s *VaultStore) Store(cb *cert.Bundle) error {
 		VaultKVKeyKey:   keyString,
 		VaultKVKeyPFX:   base64.StdEncoding.EncodeToString(pfxBytes),
 	}
-	_, err = s.kv().Put(context.Background(), s.certPath(cb.Certificate.Subject.CommonName), data)
+	_, err = s.kv().Put(context.Background(), s.certPath(key), data)
 	return err
 }
 
