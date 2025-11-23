@@ -211,7 +211,9 @@ func TestMain(t *testing.T) {
 			oldExitFunc := exitFunc
 			defer func() { exitFunc = oldExitFunc }()
 
-			t.Cleanup(setEnv(tc.env))
+			for k, v := range tc.env {
+				t.Setenv(k, v)
+			}
 
 			// Test initial cert
 			t.Log("Testing initial...")
@@ -255,29 +257,6 @@ func TestMain(t *testing.T) {
 				a.assert(t, v, 2)
 			}
 		})
-	}
-}
-
-func setEnv(env map[string]string) func() {
-	toRestore := map[string]string{}
-	toUnset := []string{}
-
-	for k, v := range env {
-		if orig, ok := os.LookupEnv(k); ok {
-			toRestore[k] = orig
-		} else {
-			toUnset = append(toUnset, k)
-		}
-		_ = os.Setenv(k, v)
-	}
-
-	return func() {
-		for _, k := range toUnset {
-			os.Unsetenv(k)
-		}
-		for k, v := range toRestore {
-			os.Setenv(k, v)
-		}
 	}
 }
 

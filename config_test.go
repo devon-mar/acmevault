@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"reflect"
 	"testing"
 
@@ -108,7 +106,8 @@ test.example.com,test2.example.com
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			setEnvs(t, map[string]string{envCerts: tc.certsEnv, envExitError: tc.exitOnError})
+			t.Setenv(envCerts, tc.certsEnv)
+			t.Setenv(envExitError, tc.exitOnError)
 
 			have, err := configFromEnv()
 			if err == nil && tc.wantError {
@@ -120,13 +119,5 @@ test.example.com,test2.example.com
 				t.Errorf("got %#v, want %#v", have, tc.want)
 			}
 		})
-	}
-}
-
-func setEnvs(t *testing.T, kv map[string]string) {
-	for k, v := range kv {
-		if err := os.Setenv(k, v); err != nil {
-			log.Fatalf("error setting env: %v", err)
-		}
 	}
 }
