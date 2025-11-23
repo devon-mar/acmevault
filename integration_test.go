@@ -362,8 +362,10 @@ func (ao *assertOptions) assert(t *testing.T, v *vault.Client, wantVersion int) 
 	if !reflect.DeepEqual(cb.Certificate.DNSNames, ao.domains) {
 		t.Errorf("expected domains %#v, got %#v", ao.domains, cb.Certificate.DNSNames)
 	}
-	if cb.Certificate.Subject.CommonName != ao.domains[0] {
-		t.Errorf("expected CN=%q, got CN=%q", ao.domains[0], cb.Certificate.Subject.CommonName)
+	// pebble >=2.5.0 removes the common name.
+	// https://github.com/letsencrypt/pebble/pull/420
+	if cb.Certificate.Subject.CommonName != "" {
+		t.Errorf("expected empty CN, got CN=%q", cb.Certificate.Subject.CommonName)
 	}
 
 	pfxBytes, err := base64.StdEncoding.DecodeString(pfx)
