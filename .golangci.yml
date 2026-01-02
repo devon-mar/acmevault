@@ -1,9 +1,17 @@
 ---
+version: "2"
 linters:
   enable:
-    - gofumpt
-    - misspell
     - bodyclose
-    - forbidigo
     - copyloopvar
+    - forbidigo
+    - misspell
     - sloglint
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+
+formatters:
+  enable:
+    - gofumpt

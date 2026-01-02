@@ -161,7 +161,7 @@ func generateKey(typ string) (crypto.PrivateKey, error) {
 	case "RSA2048":
 		pk, err = rsa.GenerateKey(rand.Reader, 2048)
 	default:
-		return nil, fmt.Errorf("Unsupported key type %q", typ)
+		return nil, fmt.Errorf("unsupported key type %q", typ)
 	}
 	return pk, err
 }
