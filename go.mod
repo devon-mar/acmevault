@@ -6,7 +6,7 @@ require (
 	github.com/devon-mar/pkiutil v0.0.0-20250209022220-e98cf05e8783
 	github.com/go-acme/lego/v4 v4.26.0
 	github.com/hashicorp/vault/api v1.22.0
-	software.sslmate.com/src/go-pkcs12 v0.6.0
+	software.sslmate.com/src/go-pkcs12 v0.7.0
 )
 
 require (
