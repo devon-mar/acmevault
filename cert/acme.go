@@ -139,7 +139,7 @@ func getDNS01Opts() []dns01.ChallengeOption {
 		opts = []dns01.ChallengeOption{dns01.AddRecursiveNameservers(dns01.ParseNameservers(strings.Split(servers, ",")))}
 	}
 	if b, _ := strconv.ParseBool(os.Getenv(EnvACMEDisableCompletePropagation)); b {
-		opts = append(opts, dns01.DisableCompletePropagationRequirement())
+		opts = append(opts, dns01.DisableAuthoritativeNssPropagationRequirement())
 	}
 	return opts
 }

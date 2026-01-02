@@ -106,7 +106,9 @@ func (p *TempTXTProvider) set(fqdn string, value string) error {
 }
 
 func (p *TempTXTProvider) getRecord(domain string, keyAuth string) (string, string) {
-	fqdn, value := dns01.GetRecord(domain, keyAuth)
+	info := dns01.GetChallengeInfo(domain, keyAuth)
+	fqdn := info.EffectiveFQDN
+	value := info.Value
 
 	if p.stripAcmeChallenge {
 		fqdn = strings.TrimPrefix(fqdn, "_acme-challenge.")
